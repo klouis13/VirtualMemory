@@ -1,22 +1,31 @@
-package src;
-
 /**
- *
  * Class MemoryManager manages the physical memory in my virtual
- * memory simulation. It handles page faults and maintains 
+ * memory simulation. It handles page faults and maintains
  * statistics about memory access.
  *
  * @author David M. Hansen
  * @version 1.5
  */
 
-
-abstract class MemoryManager 
+abstract class MemoryManager
 {
-  
-   // Class-wide constant defining how many physical pages we have 
-   static protected final int NUM_PHYSICAL_MEMORY_FRAMES = 5;
+   // Class-wide constant defining how many physical pages we have
+   static protected final int NUM_PHYSICAL_MEMORY_FRAMES = 4;
 
+   // I represent physical memory as an array of PCBs - the process
+   // that owns that memory will be in that array slot. A null object
+   // means the slot is currently free.
+   protected PCB _physicalMemory[] = new PCB[NUM_PHYSICAL_MEMORY_FRAMES];
+
+   // memCounter keeps track of a count for each memory frame. Its
+   // meaning depends on the page-replacement algorithm being used
+   protected int _memCounter[] = new int[NUM_PHYSICAL_MEMORY_FRAMES];
+
+   // Two counters to track the number of page faults and total number
+   // of memory references
+   protected int _pageFaults;
+   protected int _memoryReferences;
+   protected int _processOrderIn;
 
    public MemoryManager()
    {
@@ -24,26 +33,26 @@ abstract class MemoryManager
       // value for an unitialized object and we could have just
       // set the other counters to 0 when we declared them below,
       // but I prefer to be safe and explicit.
-      
-      for (int i=0; i<NUM_PHYSICAL_MEMORY_FRAMES; i++)
+
+      for (int i = 0; i < NUM_PHYSICAL_MEMORY_FRAMES; i++)
       {
          // Set the physical memory pages to refer to a null object
          // indicating that they are initially "free"
-         p_physicalMemory[i] = (PCB) null;
-         p_memCounter[i] = 0;
+         _physicalMemory[i] = (PCB) null;
+         _memCounter[i] = 0;
       }
 
       // Set our global page fault and memory-reference counters to 0
-      p_pageFaults = 0;
-      p_memoryReferences = 0;
+      _pageFaults = 0;
+      _memoryReferences = 0;
+      _processOrderIn = 0;
 
    } // MemoryManager
 
 
-
    /**
     * Marks any memory pages owned by the given process as being
-    * free and prints out information 
+    * free and prints out information
     *
     * @param process the PCB leaving the simulation
     */
@@ -56,17 +65,16 @@ abstract class MemoryManager
 
       // Set any physical page owned by this process to null and reset
       // the counter 
-      for (int i=0; i<NUM_PHYSICAL_MEMORY_FRAMES; i++)
+      for (int i = 0; i < NUM_PHYSICAL_MEMORY_FRAMES; i++)
       {
-         if (p_physicalMemory[i] == process)
+         if (_physicalMemory[i] == process)
          {
-            p_physicalMemory[i] = null;
-            p_memCounter[i] = 0;
+            _physicalMemory[i] = null;
+            _memCounter[i] = 0;
          }
       }
 
    } // freePages 
-
 
 
    /**
@@ -78,10 +86,9 @@ abstract class MemoryManager
     */
    public abstract int handlePageFault(PCB process);
 
-
    /**
     * Simulates a physical page being referenced by a process.
-    * This allows the MemoryManager to keep track of the total 
+    * This allows the MemoryManager to keep track of the total
     * number of page references.
     *
     * @param pageNum the physical page being referenced
@@ -90,8 +97,8 @@ abstract class MemoryManager
 
 
    /**
-    * Searches physical memory to find a free page or a currently 
-    * occupied page to replace.  
+    * Searches physical memory to find a free page or a currently
+    * occupied page to replace.
     *
     * @return an int specifying the number of the physical page to replace
     */
@@ -103,19 +110,18 @@ abstract class MemoryManager
       // looking any further
       boolean foundFree = false;
 
-
       // Search physical memory. If we find a free frame, that's
       // our victim. Otherwise our victim will be the frame with
-      // the highest p_memCounter value.  
-      for (int i=0; i<NUM_PHYSICAL_MEMORY_FRAMES && !foundFree; i++)
+      // the highest _memCounter value.
+      for (int i = 0; i < NUM_PHYSICAL_MEMORY_FRAMES && !foundFree; i++)
       {
-         if (p_physicalMemory[i] == null)
+         if (_physicalMemory[i] == null)
          {
             // Found a free frame - that's our victim!
             foundFree = true;
             victimPage = i;
          }
-         else if (p_memCounter[i] > p_memCounter[victimPage])
+         else if (_memCounter[i] > _memCounter[victimPage])
          {
             // This page has a higher count than our current victim,
             // it's the new victim
@@ -129,8 +135,7 @@ abstract class MemoryManager
    } // findVictim
 
 
-
-  /**
+   /**
     * Print overall statistics about the simulation including the
     * total number of memory references, page faults, and the page
     * fault ratio.
@@ -139,45 +144,27 @@ abstract class MemoryManager
    {
       // Iterate over the physical memory and see if the page is
       // free or owned by some process
-      for (int i=0; i<NUM_PHYSICAL_MEMORY_FRAMES; i++)
+      for (int i = 0; i < NUM_PHYSICAL_MEMORY_FRAMES; i++)
       {
-         if (p_physicalMemory[i] == null) // Not owned by any process
+         if (_physicalMemory[i] == null) // Not owned by any process
          {
-            System.out.println("Page "+i+" is free");
+            System.out.println("Page " + i + " is free");
          }
          else // Owned by a procewss
          {
-            System.out.println("Page "+i+" is owned by process # "
-                  + p_physicalMemory[i].getID());
+            System.out.println(
+                  "Page " + i + " is owned by process # " + _physicalMemory[i]
+                        .getID());
          }
       } // for
 
       // How many page faults were there and what was the page fault ratio
-      System.out.println("\n\n"+p_pageFaults + " page faults out of "
-            + p_memoryReferences 
-            + " total memory references for a page fault ratio of "
-            + (int) (((float) p_pageFaults / (float) p_memoryReferences) * 100)
-            + "%");
+      System.out.println(
+            "\n\n" + _pageFaults + " page faults out of " + _memoryReferences
+                  + " total memory references for a page fault ratio of "
+                  + (int) (((float) _pageFaults / (float) _memoryReferences)
+                  * 100) + "%");
 
    } // printStatistics
-
-
-
-
-   // I represent physical memory as an array of PCBs - the process
-   // that owns that memory will be in that array slot. A null object
-   // means the slot is currently free.
-   protected PCB p_physicalMemory[] = new PCB[NUM_PHYSICAL_MEMORY_FRAMES];
-
-   // memCounter keeps track of a count for each memory frame. Its
-   // meaning depends on the page-replacement algorithm being used
-   protected int p_memCounter[] = new int[NUM_PHYSICAL_MEMORY_FRAMES];
-
-
-   // Two counters to track the number of page faults and total number
-   // of memory references
-   protected int p_pageFaults;
-   protected int p_memoryReferences;
-
 
 } // MemoryManager 

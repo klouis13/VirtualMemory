@@ -1,17 +1,15 @@
 /**
- *
- * Reads logical addresses from an input file and simulates virtual 
+ * Reads logical addresses from an input file and simulates virtual
  * memory page-replacement algorithms
  *
  * @author David M. Hansen
  * @version 1.5
- *
  **/
+
 import java.util.Scanner;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
-
 
 public class Simulation
 {
@@ -19,25 +17,25 @@ public class Simulation
    // Constants defining how big pages are and how many virtual pages we allow. 
    // These constants are used by other classes who need to know the 
    // constraints of the simulation
-   public static final int NUM_VIRTUAL_PAGES = 128;  // 128 virtual pages
-   public static final int PAGE_SIZE = 32;           // 32 bytes per page
+   public static final int NUM_VIRTUAL_PAGES = 256;  // 256 virtual pages
+   public static final int PAGE_SIZE         = 16;           // 16 bytes per page
 
 
    /**
-     * The main body of the simulation. Opens and reads a file of
-     * memory addresses and simulates virtual memory references.
-     *
-     * @param args[] array of arguments - args[0] is the name of of the
-     * input file. Optional args[1] indicates the replacement algorithm to use, 
-     * the default is FIFO unless "LRU" is given
-     */
+    * The main body of the simulation. Opens and reads a file of
+    * memory addresses and simulates virtual memory references.
+    *
+    * @param args array of arguments - args[0] is the name of of the
+    * input file. Optional args[1] indicates the replacement algorithm to use,
+    * the default is FIFO unless "LRU" is given
+    */
    public static void main(String args[]) throws IOException
    {
       // An address that is used to signal the end of a process
       final int END_OF_PROCESS = -1;
 
       // At runtime we'll figure out what sort of MemoryManager to use -
-      // we have different sublcasses with different replacement mechanisms
+      // we have different subclasses with different replacement mechanisms
       MemoryManager memoryManager;
 
       // Initialize the HashMap we'll use to store and look up PCB 
@@ -51,15 +49,13 @@ public class Simulation
       boolean writeFlag;   // Flag indicating whether reference is a read or write
       Scanner inputFile;   // Scanner over the input file
 
-
-
       // Make sure we got enough arguments
       if (args.length == 0)
       {
-         System.err.println("ERROR: Insufficient arguments\n\tUsage: java Simulation <inputFilename> [LRU/FIFO]");
+         System.err.println(
+               "ERROR: Insufficient arguments\n\tUsage: java Simulation <inputFilename> [LRU/FIFO]");
          System.exit(1);
       }
-
 
       // Attempt to open the input file, just let the exception be
       // thrown if there are any problems
@@ -77,7 +73,6 @@ public class Simulation
          memoryManager = new FIFOMemoryManager();
       }
 
-
       // Keep reading from the file until it's empty
       while (inputFile.hasNextInt())
       {
@@ -88,7 +83,6 @@ public class Simulation
          // Third parameter is the read/write flag that's represented as
          // a 1/0 in the input file; turn it into a boolean flag
          writeFlag = (inputFile.nextInt() == 1);
-
 
          // See if this process already exists in the simulation
          // Note: since the HashMap uses Object keys we must
@@ -104,8 +98,7 @@ public class Simulation
          }
          // process now refers to a valid Process object
 
-
-         // If the address is End-of-Process delete this 
+         // If the address is End-of-Process delete this
          // process from the simulation, otherwise give the process
          // the address and let it pretend to access memory
          if (logicalAddress == END_OF_PROCESS)

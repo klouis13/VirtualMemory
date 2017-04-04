@@ -1,5 +1,4 @@
 /**
- *
  * Class PCB represents a process in my virtual memory simulation.
  * The PCB has a page-table and a process number and handles all memory
  * references.
@@ -10,7 +9,10 @@
 
 public class PCB
 {
- 
+   // PCB knows its number and has a page-table for mapping memory
+   private int       _id;
+   private PageTable _pageTable;
+
 
    /**
     * Creates a new PCB with the given process number
@@ -20,12 +22,12 @@ public class PCB
    public PCB(int processID)
    {
       // Set our process ID
-      p_id = processID;
+      _id = processID;
       // Create our page-table
-      p_pageTable = new PageTable(this);
+      _pageTable = new PageTable(this);
    }
 
- 
+
    /**
     * Returns the number of the PCB
     *
@@ -33,7 +35,7 @@ public class PCB
     */
    public int getID()
    {
-      return p_id;
+      return _id;
    } // getID
 
 
@@ -42,17 +44,18 @@ public class PCB
     * a given logical address.
     *
     * @param memoryManager the object that manages memory
-    * @param address the logical address to access
-    * @param write if true, indicates a write operation 
+    * @param address       the logical address to access
+    * @param write         if true, indicates a write operation
     */
-   public void handleAddress(MemoryManager memoryManager, int address, boolean write)
+   public void handleAddress(MemoryManager memoryManager, int address,
+         boolean write)
    {
       // Have our page-table translate the logical address to a physical page 
       // number - tell it whether this was a read or write so it can
       // remember. And ask the memoryManager to touch that page for us 
-      memoryManager.touchPage(p_pageTable.translateAddress(memoryManager, address, write));
+      memoryManager.touchPage(
+            _pageTable.translateAddress(memoryManager, address, write));
    } // handleAddress
-
 
 
    /**
@@ -65,9 +68,8 @@ public class PCB
    {
       // We've had a page taken away from us.  Have the page-table invalidate 
       // this physical page
-      return p_pageTable.invalidatePage(page);
+      return _pageTable.invalidatePage(page);
    } // invalidatePage 
-
 
 
    /**
@@ -75,47 +77,50 @@ public class PCB
     */
    public String toString()
    {
-      return "Process # " + p_id + " Memory Map\n"+p_pageTable;
+      return "Process # " + _id + " Memory Map\n" + _pageTable;
    } // toString
 
 
-
-   // PCB knows its number and has a page-table for mapping memory
-   private int p_id;
-   private PageTable p_pageTable;
-
-
-
    /**
-    *
     * Class PageTable is an inner class that holds the process-specific map
     * from logical memory to physical memory.
     *
-    * @author David M. Hansen 
+    * @author David M. Hansen
     * @version 1.5
     */
    class PageTable
    {
+      // PageTable holds a memory map that maps logical pages to physical pages
+      private int _logicalMap[] = new int[Simulation.NUM_VIRTUAL_PAGES];
+
+      // PageTable keeps track of whether the mapping is valid or not
+      private boolean _valid[] = new boolean[Simulation.NUM_VIRTUAL_PAGES];
+
+      // PageTable keeps track of whether the page is dirty or not
+      private boolean _dirty[] = new boolean[Simulation.NUM_VIRTUAL_PAGES];
+
+      // PageTable knows what process owns it
+      private PCB _myProcess;
 
 
       /**
        * Create a new PageTable
        *
-       * @param myProc a reference back to the PCB that holds this
-       * PageTable
+       * @param myProcess a reference back to the PCB that holds this
+       *                  PageTable
        */
       public PageTable(PCB myProcess)
       {
          // Set our reference to the owning process
-         p_myProcess = myProcess;
+         _myProcess = myProcess;
 
          // Initially, all our pages are invalid and not dirty. We don't need to
          // initialize the logicalMap here because we'll never access an invalid
          // page.
-         for(int i=0; i<Simulation.NUM_VIRTUAL_PAGES; i++)
+         for (int i = 0; i < Simulation.NUM_VIRTUAL_PAGES; i++)
          {
-            p_valid[i] = false;
-            p_dirty[i] = false;
+            _valid[i] = false;
+            _dirty[i] = false;
          }
       } // PageTable
 
@@ -126,35 +131,36 @@ public class PCB
        * PageTable requests the memoryManager to handle a page fault.
        *
        * @param memoryManager the object that manages memory
-       * @param address the logical address to access
-       * @param write if true, indicates a write operation
+       * @param address       the logical address to access
+       * @param write         if true, indicates a write operation
        * @return the physical page number
        */
-      public int translateAddress(MemoryManager memoryManager, int address, boolean write)
+      public int translateAddress(MemoryManager memoryManager, int address,
+            boolean write)
       {
          // The logical page number is the address divided by the page size
-         int logicalPage = address/Simulation.PAGE_SIZE;
+         int logicalPage = address / Simulation.PAGE_SIZE;
 
          // Find the mapping to a physical page - we test validity below
-         int physicalPage = p_logicalMap[logicalPage];
+         int physicalPage = _logicalMap[logicalPage];
 
          // See if the physical page we mapped to is valid for us
-         if (!p_valid[logicalPage])
+         if (!_valid[logicalPage])
          {
             // Nope - ask the memoryManager to fault a page in for us and
             // tell us what physical page he's assigned to us
-            physicalPage = memoryManager.handlePageFault(p_myProcess);
+            physicalPage = memoryManager.handlePageFault(_myProcess);
 
             // Mark that logical page as valid and set it to refer to the
             // physical page the memoryManager just gave us
-            p_valid[logicalPage] = true;
-            p_logicalMap[logicalPage] = physicalPage;
+            _valid[logicalPage] = true;
+            _logicalMap[logicalPage] = physicalPage;
          }
 
          // If this was a write, remember that
          if (write)
          {
-            p_dirty[logicalPage] = true;
+            _dirty[logicalPage] = true;
          }
 
          return physicalPage;
@@ -162,14 +168,12 @@ public class PCB
       } // translateAddress 
 
 
-
       /**
        * Searches the memory map for the given physical page and
        * marks that logical page as invalid
        *
        * @param page the physical page that is no longer valid
-       * @returns boolean true if the page invalidated is p_dirty
-       * 
+       * @returns boolean true if the page invalidated is _dirty
        */
       public boolean invalidatePage(int page)
       {
@@ -177,12 +181,12 @@ public class PCB
 
          // Find this physical page in our memory map and mark it
          // as invalid for us
-         for(int i=0; i<Simulation.NUM_VIRTUAL_PAGES; i++)
+         for (int i = 0; i < Simulation.NUM_VIRTUAL_PAGES; i++)
          {
-            if (p_logicalMap[i] == page)
+            if (_logicalMap[i] == page)
             {
-               p_valid[i] = false;
-               isDirty = p_dirty[i];
+               _valid[i] = false;
+               isDirty = _dirty[i];
             }
          }
 
@@ -191,9 +195,8 @@ public class PCB
       } // invalidatePage 
 
 
-
       /**
-       * @return string representation of pageTable that shows the logicalMap for 
+       * @return string representation of pageTable that shows the logicalMap for
        * pages that are currently valid
        */
       public String toString()
@@ -202,33 +205,19 @@ public class PCB
 
          // If the page is marked as "valid", include it, otherwise
          // ignore it
-         for(int i=0; i<Simulation.NUM_VIRTUAL_PAGES; i++)
+         for (int i = 0; i < Simulation.NUM_VIRTUAL_PAGES; i++)
          {
-            if (p_valid[i])
+            if (_valid[i])
             {
                stringRep.append("Logical # ").append(i).append(" = physical #").
-                  append(p_logicalMap[i]).append("\n");
+                     append(_logicalMap[i]).append("\n");
             }
          }
 
          return stringRep.toString();
       } // toString
 
-
-      // PageTable holds a memory map that maps logical pages to physical pages
-      private int p_logicalMap[] = new int[Simulation.NUM_VIRTUAL_PAGES];
-
-      // PageTable keeps track of whether the mapping is valid or not
-      private boolean p_valid[] = new boolean[Simulation.NUM_VIRTUAL_PAGES];
-
-      // PageTable keeps track of whether the page is dirty or not
-      private boolean p_dirty[] = new boolean[Simulation.NUM_VIRTUAL_PAGES];
-
-      // PageTable knows what process owns it
-      private PCB p_myProcess;
-
    } // class PageTable
-
 
 } // class PCB
 

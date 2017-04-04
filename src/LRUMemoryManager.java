@@ -1,17 +1,13 @@
 /**
- *
  * Class LRUMemoryManager manages the physical memory in my virtual
- * memory simulation using an LRU paging algorithm. 
+ * memory simulation using an LRU paging algorithm.
  *
- * @author 
- * @version 
+ * @author
  * @see MemoryManager
  */
 
-
 class LRUMemoryManager extends MemoryManager
 {
-
 
    /**
     * Finds a physical memory page to give to the requesting process.
@@ -27,10 +23,9 @@ class LRUMemoryManager extends MemoryManager
    } // handlePageFault
 
 
-
    /**
     * Simulates a physical page being referenced by a process.
-    * This allows the MemoryManager to keep track of the total 
+    * This allows the MemoryManager to keep track of the total
     * number of page references.
     *
     * @param pageNum the physical page being referenced
@@ -40,5 +35,4 @@ class LRUMemoryManager extends MemoryManager
 
    } // touchPage 
 
-
-} // LRUMemoryManager 
+} // LRUMemoryManager
