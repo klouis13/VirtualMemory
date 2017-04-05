@@ -18,56 +18,23 @@ class FIFOMemoryManager extends MemoryManager
     */
    public int handlePageFault(PCB process)
    {
-      // Declare Variables
-      boolean foundSlot = false;
-      int physicalPageNum;
-      int firstInIndex = 0;
+      // Declare constants
+      int replacedPage = findVictim();
 
-      // Cycle through physical memory trying to find an open spot, if no spot
-      // is open then the memory in the longest is then replaced
-      for (physicalPageNum = 0; physicalPageNum < _physicalMemory.length
-            && !foundSlot; physicalPageNum++)
-      {
-         // Check for an empty memory slot
-         if (_physicalMemory[physicalPageNum] == null)
-         {
-            // Replace that empty slot with the process
-            _physicalMemory[physicalPageNum] = process;
-            _memCounter[physicalPageNum] = _processOrderIn++;
-            foundSlot = true;
-         }
-         else
-         // An empty slot wasn't found so increase the page fault counter
-         {
-            _pageFaults++;
-            System.out.printf("PAGE-FAULT: Process %d given page %d\n",
-                  process.getID(), physicalPageNum);
-         }
-      }
-      if (!foundSlot)
-      {
-         // Cycle through the memory counter array comparing the value of the
-         // memory references with the following value
-         for (physicalPageNum = 0;
-              physicalPageNum < _memCounter.length - 1; physicalPageNum++)
-         {
-            // Compare the memory reference values and store the index of the
-            // lower
-            if (_memCounter[physicalPageNum] < _memCounter[physicalPageNum + 1])
-            {
-               firstInIndex = physicalPageNum;
-            }
-         }
+      // Set the process to the victims page number
+      _physicalMemory[replacedPage] = process;
 
-         // Replace i with the correct index to replace
-         physicalPageNum = firstInIndex;
+      // Reset the counter for that memory
+      _memCounter[replacedPage] = 0;
 
-         // Replace the memory in the process
-         _physicalMemory[physicalPageNum] = process;
-         _memCounter[physicalPageNum] = _processOrderIn++;
-      }
+      // Increments the counters to keep track of statistics
+      _pageFaults++;
 
-      return physicalPageNum;
+      System.out
+            .printf("PAGE-FAULT: Process %d given page %d\n", process.getID(),
+                  replacedPage);
+
+      return replacedPage;
 
    } // handlePageFault
 
@@ -82,10 +49,9 @@ class FIFOMemoryManager extends MemoryManager
     */
    public void touchPage(int pageNum)
    {
+      incrementMemCount();
 
       _memoryReferences++;
-
-      // Doesn't need to do anything ... ?
 
    } // touchPage 
 

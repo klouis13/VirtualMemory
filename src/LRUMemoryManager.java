@@ -18,7 +18,20 @@ class LRUMemoryManager extends MemoryManager
     */
    public int handlePageFault(PCB process)
    {
-      return 0;
+      // Declare constants
+      int replacedPage = findVictim();
+
+      // Set the process to the victims page number
+      _physicalMemory[replacedPage] = process;
+
+      // Increments the counters to keep track of statistics
+      _pageFaults++;
+
+      System.out
+            .printf("PAGE-FAULT: Process %d given page %d\n", process.getID(),
+                  replacedPage);
+
+      return replacedPage;
 
    } // handlePageFault
 
@@ -32,6 +45,11 @@ class LRUMemoryManager extends MemoryManager
     */
    public void touchPage(int pageNum)
    {
+      _memCounter[pageNum] = 0;
+
+      incrementMemCount();
+
+      _memoryReferences++;
 
    } // touchPage 
 

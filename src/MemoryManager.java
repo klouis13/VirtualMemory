@@ -25,7 +25,6 @@ abstract class MemoryManager
    // of memory references
    protected int _pageFaults;
    protected int _memoryReferences;
-   protected int _processOrderIn;
 
    public MemoryManager()
    {
@@ -45,7 +44,6 @@ abstract class MemoryManager
       // Set our global page fault and memory-reference counters to 0
       _pageFaults = 0;
       _memoryReferences = 0;
-      _processOrderIn = 0;
 
    } // MemoryManager
 
@@ -134,6 +132,17 @@ abstract class MemoryManager
 
    } // findVictim
 
+
+   /**
+    * Increment the time of each page in the memory
+    */
+   public void incrementMemCount()
+   {
+      for (int i = 0; i < _memCounter.length; i++)
+      {
+         _memCounter[i]++;
+      }
+   }
 
    /**
     * Print overall statistics about the simulation including the
