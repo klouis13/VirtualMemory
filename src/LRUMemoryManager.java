@@ -21,15 +21,19 @@ class LRUMemoryManager extends MemoryManager
       // Declare constants
       int replacedPage = findVictim();
 
+      // Check that the page being replaced isn't empty
+      if (_physicalMemory[replacedPage] != null)
+      {
+         // Increments the counters to keep track of statistics
+         _pageFaults++;
+
+         System.out
+               .printf("PAGE-FAULT: Process %d given page %d\n", process.getID(),
+                     replacedPage);
+      }
+
       // Set the process to the victims page number
       _physicalMemory[replacedPage] = process;
-
-      // Increments the counters to keep track of statistics
-      _pageFaults++;
-
-      System.out
-            .printf("PAGE-FAULT: Process %d given page %d\n", process.getID(),
-                  replacedPage);
 
       return replacedPage;
 
@@ -51,6 +55,17 @@ class LRUMemoryManager extends MemoryManager
 
       _memoryReferences++;
 
-   } // touchPage 
+   } // touchPage
+
+   /**
+    * Increment the time of each page in the memory
+    */
+   private void incrementMemCount()
+   {
+      for (int i = 0; i < _memCounter.length; i++)
+      {
+         _memCounter[i]++;
+      }
+   }
 
 } // LRUMemoryManager

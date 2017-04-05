@@ -8,6 +8,8 @@
 
 class FIFOMemoryManager extends MemoryManager
 {
+   // Initialize to -1 so that it starts at 0 when incremented once.
+   private int _replacedPage = -1;
 
    /**
     * Finds a physical memory page to give to the requesting process.
@@ -18,23 +20,26 @@ class FIFOMemoryManager extends MemoryManager
     */
    public int handlePageFault(PCB process)
    {
-      // Declare constants
-      int replacedPage = findVictim();
+      // Increment to the next page to start
+      _replacedPage++;
 
-      // Set the process to the victims page number
-      _physicalMemory[replacedPage] = process;
+      // Check if the physical memory is empty at the next slot
+      if (_physicalMemory[_replacedPage % NUM_PHYSICAL_MEMORY_FRAMES] != null)
+      {
+         // A page fault occured
+         _pageFaults++;
 
-      // Reset the counter for that memory
-      _memCounter[replacedPage] = 0;
+         // Print out the proccess ID an the page that was given to it
+         System.out
+               .printf("PAGE-FAULT: Process %d given page %d\n", process.getID(),
+                     _replacedPage % NUM_PHYSICAL_MEMORY_FRAMES);
+      }
 
-      // Increments the counters to keep track of statistics
-      _pageFaults++;
+      // Put the process in the current page, counts from 0 to the
+      // NUM_PHYSICAL_MEMORY_FRAMES
+      _physicalMemory[_replacedPage % NUM_PHYSICAL_MEMORY_FRAMES] = process;
 
-      System.out
-            .printf("PAGE-FAULT: Process %d given page %d\n", process.getID(),
-                  replacedPage);
-
-      return replacedPage;
+      return _replacedPage % NUM_PHYSICAL_MEMORY_FRAMES;
 
    } // handlePageFault
 
@@ -49,8 +54,6 @@ class FIFOMemoryManager extends MemoryManager
     */
    public void touchPage(int pageNum)
    {
-      incrementMemCount();
-
       _memoryReferences++;
 
    } // touchPage 

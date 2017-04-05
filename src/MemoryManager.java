@@ -134,17 +134,6 @@ abstract class MemoryManager
 
 
    /**
-    * Increment the time of each page in the memory
-    */
-   public void incrementMemCount()
-   {
-      for (int i = 0; i < _memCounter.length; i++)
-      {
-         _memCounter[i]++;
-      }
-   }
-
-   /**
     * Print overall statistics about the simulation including the
     * total number of memory references, page faults, and the page
     * fault ratio.
