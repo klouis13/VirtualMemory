@@ -2,14 +2,13 @@
  * Class FIFOMemoryManager manages the physical memory in my virtual
  * memory simulation using a FIFO paging algorithm.
  *
- * @author
  * @see MemoryManager
  */
-
 class FIFOMemoryManager extends MemoryManager
 {
    // Initialize to -1 so that it starts at 0 when incremented once.
    private int _replacedPage = -1;
+
 
    /**
     * Finds a physical memory page to give to the requesting process.
@@ -20,26 +19,35 @@ class FIFOMemoryManager extends MemoryManager
     */
    public int handlePageFault(PCB process)
    {
+      // Initialize variables
+      int replacedPage;
+
       // Increment to the next page to start
       _replacedPage++;
 
-      // Check if the physical memory is empty at the next slot
-      if (_physicalMemory[_replacedPage % NUM_PHYSICAL_MEMORY_FRAMES] != null)
-      {
-         // A page fault occured
-         _pageFaults++;
+      // A page fault occured
+      _pageFaults++;
 
-         // Print out the proccess ID an the page that was given to it
-         System.out
-               .printf("PAGE-FAULT: Process %d given page %d\n", process.getID(),
-                     _replacedPage % NUM_PHYSICAL_MEMORY_FRAMES);
+      // Mod the counter with the number of physical pages to count from 0 to the
+      // number of NUM_PHYSICAL_MEMORY_FRAMES - 1
+      replacedPage = _replacedPage % NUM_PHYSICAL_MEMORY_FRAMES;
+
+      // Make sure the page isn't empty
+      if (_physicalMemory[replacedPage] != null)
+      {
+         // Invalidate the process that is being replaced
+         _physicalMemory[replacedPage].invalidatePage(replacedPage);
       }
 
-      // Put the process in the current page, counts from 0 to the
-      // NUM_PHYSICAL_MEMORY_FRAMES
-      _physicalMemory[_replacedPage % NUM_PHYSICAL_MEMORY_FRAMES] = process;
+      // Put the process in the current page
+      _physicalMemory[replacedPage] = process;
 
-      return _replacedPage % NUM_PHYSICAL_MEMORY_FRAMES;
+      // Print out the proccess ID and the page that was given to it
+      System.out
+            .printf("PAGE-FAULT: Process %d given page %d\n", process.getID(),
+                  replacedPage);
+
+      return replacedPage;
 
    } // handlePageFault
 
